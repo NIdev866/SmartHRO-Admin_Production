@@ -8,11 +8,11 @@ import { Marker, GoogleMap, DirectionsRenderer } from "react-google-maps"
 import PlacesAutocomplete, { geocodeByAddress, getLatLng } from 'react-places-autocomplete'
 import ReactResizeDetector from 'react-resize-detector';
 import { Redirect } from 'react-router'
+import {connect} from 'react-redux'
 
 
 
-
-
+import { fetchAllCampaigns, fetchCompanies } from '../actions'
 import FloatingActionButton from 'material-ui/FloatingActionButton';
 import ContentAdd from 'material-ui/svg-icons/content/add';
 import MapComponent from "./mapComponent"
@@ -259,22 +259,28 @@ class AdminParent extends Component {
         <ReactResizeDetector handleWidth handleHeight onResize={this._onResize} />
         {this.state.screenWidth > 700 &&
           <div style={{float: "left", width: "60%", position: "fixed", height: "100vh"}}>
+          {this.props.allCampaigns &&
             <MapComponent 
               zoom={10}
               center={{ lat: 51.537452, lng: -0.497681}}
               containerElement={<div style={{height: 100+"%"}} />}
               mapElement={<div style={{height: 100+"%"}} />}
+              allCampaigns={this.props.allCampaigns}
             />
+          }
           </div>
         }
         {this.state.screenWidth <= 700 &&
             <div style={{position: "absolute", height: "calc(100vh - 50px)", width: "100vw", zIndex: '1'}}>
+            {this.props.allCampaigns &&
               <MapComponent 
                 zoom={10}
                 center={{ lat: 51.537452, lng: -0.497681}}
                 containerElement={<div style={{height: 100+"%"}} />}
                 mapElement={<div style={{height: 100+"%"}} />}
+                allCampaigns={this.props.allCampaigns}
               />
+            }
           </div>
         }
         {this.state.screenWidth > 700 &&
@@ -318,4 +324,11 @@ AdminParent.propTypes = {
   onSubmit: PropTypes.func.isRequired
 }
 
-export default AdminParent
+function mapStateToProps(state) {
+  return {
+    allCampaigns: state.main.allCampaigns,
+  };
+}
+
+
+export default connect(mapStateToProps, { fetchAllCampaigns, fetchCompanies })(AdminParent)

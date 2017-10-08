@@ -20,6 +20,9 @@ class ApplicantsTabParent extends Component {
   constructor(props){
     super(props)
     this.createDistance = this.createDistance.bind(this)
+    this.state = {
+      boxesTicked: 0,
+    }
   }
   componentWillMount(){
     if(!this.props.allCampaigns){
@@ -47,22 +50,19 @@ class ApplicantsTabParent extends Component {
     this.props.clearAllJobseekersState()
   }
 
-
-
-
   createDistance(campaignLat, campaignLng, campaignIndex, jobseekerLat, jobseekerLng, jobseekerIndex){
-    console.log('INNNN')
     let resultDistance
+
     let DistanceService = new google.maps.DistanceMatrixService();
     DistanceService.getDistanceMatrix({
-        origins: [{lat: jobseekerLat, lng: jobseekerLng}],
-        destinations: [{lat: campaignLat, lng: campaignLng}],
+        origins: [{lat: campaignLat, lng: campaignLng}],
+        destinations: [{lat: jobseekerLat, lng: jobseekerLng}],
         travelMode: 'DRIVING',
         avoidHighways: false,
         avoidTolls: false,
       }, (result, status) => { 
-        if(result && result.rows[0].elements[0].duration){
-          resultDistance = result.rows[0].elements[0].duration.text
+        if(result && result.rows[0].elements[0].distance){
+          resultDistance = result.rows[0].elements[0].distance.text
           if(this.state[`distance${campaignIndex},${jobseekerIndex}`] !== resultDistance)
           this.setState({    // prevState?
             [`distance${campaignIndex},${jobseekerIndex}`]: resultDistance
@@ -70,28 +70,37 @@ class ApplicantsTabParent extends Component {
         }
     })
   }
-
-
-
-
-
-
-
-
-
-
-
-
+  formatSalaryType(salary_type){
+    switch(salary_type){
+      case 'PER_HOUR':
+        return 'per hour'
+      case 'PER_DAY':
+        return 'per day'
+      case 'PER_WEEK':
+        return 'per week'
+      case 'PER_ANNUM':
+        return 'per annum'
+    }
+  }
+  formatJobType(job_type){
+    switch(job_type){
+      case 'FULL_TIME':
+        return 'Full-Time'
+      case 'PART_TIME':
+        return 'Part-Time'
+      case 'TEMPORARY':
+        return 'Temporary'
+      case 'CONTRACT':
+        return 'Contract'
+    }
+  }
   render() {
-    console.log('rerendered')
     const cardStyle = {
       marginTop: "20px",
       backgroundColor: globalThemes.blueGrey400
     }
     this.localFetchAllJobseekersByCampaignId()
-    //if(!this.props.campaignsWithNestedJobseekers){
-      this.localNestJobseekersIntoCampaigns()
-    //}
+    this.localNestJobseekersIntoCampaigns()
     return(
       <div style={{margin: '0 auto', backgroundColor: globalThemes.blueGrey500}}>
 
@@ -111,16 +120,12 @@ class ApplicantsTabParent extends Component {
                 >
                   <p style={{fontFamily: 'Poiret One', fontSize: "18px", margin: "-10px", marginTop: "-30px", padding: "0"}}><b>{campaign.campaign_name}</b></p>
                   <p style={{fontFamily: 'Mukta', fontSize: "15px", margin: "-15px", marginLeft: '0px', marginTop: "10px", padding: "0", color: "#DEDEDE"}}>{campaign.location}</p>
-                  <p style={{fontFamily: 'Mukta', fontSize: "15px", margin: "-15px", marginLeft: '0px', marginTop: "10px", padding: "0", color: "#DEDEDE"}}>{campaign.job_type}</p>
-                  <p style={{fontFamily: 'Mukta', fontSize: "15px", margin: "-15px", marginLeft: '0px', marginTop: "10px", padding: "0", color: "#DEDEDE"}}>{campaign.salary + " " + campaign.salary_type}</p>
+                  <p style={{fontFamily: 'Mukta', fontSize: "15px", margin: "-15px", marginLeft: '0px', marginTop: "10px", padding: "0", color: "#DEDEDE"}}>{this.formatJobType(campaign.job_type)}</p>
+                  <p style={{fontFamily: 'Mukta', fontSize: "15px", margin: "-15px", marginLeft: '0px', marginTop: "10px", padding: "0", color: "#DEDEDE"}}>{campaign.salary + " " + this.formatSalaryType(campaign.salary_type)}</p>
                   <p style={{fontFamily: "Mukta", fontSize: "15px", margin: "-15px", marginLeft: '0px', marginTop: "10px", padding: "0", color: "#DEDEDE"}}>{campaign.job_start_date ? `Starting on ${campaign.job_start_date}` : "Starting on 13/07/2017"}</p>
                 </CardHeader>
-
                 <CardText expandable={true} style={{color: 'white', paddingBottom: "1px", paddingTop: "1px", backgroundColor: globalThemes.blueGrey400}}>
-
                   {campaign.jobseekers[0].map((jobseeker, jobseekerIndex)=>{
-
-
                     this.createDistance(
                       parseFloat(campaign.lat), 
                       parseFloat(campaign.lng), 
@@ -129,43 +134,35 @@ class ApplicantsTabParent extends Component {
                       parseFloat(jobseeker.lng),
                       jobseekerIndex
                     )
-
                     return (
                       <Card style={{marginBottom: '10px', position: 'relative', backgroundColor: globalThemes.blueGrey300}}>
+
                         <CardHeader
                           style={{color: 'white', height: "90px", textAlign: "left", backgroundColor: globalThemes.blueGrey300}}
                           actAsExpander={true}
                           showExpandableButton={true}
                           iconStyle={{position: "relative", left: "12px", color: 'white'}}
                         >
+                          
                           <p style={{fontFamily: 'Poiret One', fontSize: "16px", margin: "-10px", marginTop: "-30px", padding: "0"}}><b>{jobseeker.first_name + ' ' + jobseeker.last_name}</b></p>
                           <p style={{fontFamily: globalFonts.Abel, fontSize: "13px", margin: "-10px", marginTop: "10px", padding: "0", color: "#DEDEDE"}}>{'Age range ' + jobseeker.age}</p>
-
-<p style={{fontSize: "15px", margin: "-10px",
- marginTop: "26px", padding: "0", 
-
- color: "grey"}}>Distance: {/*this.state[`distance${campaignIndex},${jobseekerIndex}`] + " away"*/}</p>
-
-
-
+                          <p style={{fontFamily: globalFonts.Abel, 
+                            fontSize: "13px", margin: "-10px", marginTop: "10px", padding: "0", 
+                            color: "#DEDEDE"}}>Distance: {this.state[`distance${campaignIndex},${jobseekerIndex}`] + " away"}</p>
                           <p style={{fontFamily: globalFonts.Abel, fontSize: "13px", margin: "-10px", marginTop: "10px", padding: "0", color: "#DEDEDE"}}>{jobseeker.email_id}</p>
                           <p style={{fontFamily: globalFonts.Abel, fontSize: "13px", margin: "-10px", marginTop: "10px", padding: "0", color: "#DEDEDE"}}>{jobseeker.contact_no}</p>
                         </CardHeader>
 
                         {jobseeker.job_status == 'applied' ? 
                         <div>
-                        {console.log(jobseeker.job_status)}
                         <Checkbox
                           disableTouchRipple
-                          checkedIcon={<ActionFavorite color='red' />}
-                          uncheckedIcon={<ActionFavoriteBorder color='red' />}
-
+                          uncheckedIcon={<ActionFavoriteBorder color={globalThemes.blueGrey500}/>}
                           onCheck={() => {
                             jobseeker.job_status = 'selected'
                             this.afterClickFetchAllJobseekersByCampaignId()
                             this.props.updateJobseekerJobStatus(jobseeker)
                           }}
-
                           style={{position: 'absolute', top:'0px', left: 'calc(100% - 40px)', float: 'right'}}
                         /> 
                         </div>
@@ -174,16 +171,11 @@ class ApplicantsTabParent extends Component {
                         <Checkbox
                           disableTouchRipple
                           checkedIcon={<ActionFavorite/>}
-                          uncheckedIcon={<ActionFavoriteBorder color={yellow500}/>}
                           checked={true}
-
                           style={{position: 'absolute', top:'0px', left: 'calc(100% - 40px)', float: 'right'}}
                         />
                         </div>
                         }
-
-
-
                       </Card>
                     )})
                   }
